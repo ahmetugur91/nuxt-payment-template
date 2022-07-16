@@ -1,78 +1,80 @@
 <template>
   <v-container fluid>
-    <v-form v-model="tcFormValid" :disabled="loading">
+    <v-row v-if="smsStatus === 'success'">
+      <v-col>
+        <v-alert
+          outlined
+          type="success"
+          text
+          prominent
+        >
+          Ödemeniz Onaylanmıştır
+        </v-alert>
+      </v-col>
+    </v-row>
+    <v-row v-if="smsStatus === 'failed'">
+      <v-col>
+        <v-alert
+          outlined
+          type="error"
+          text
+          prominent
+        >
+          Ödemenizde Hata Oluşmuştur
+        </v-alert>
+      </v-col>
+    </v-row>
+    <v-form v-if="smsStatus === 'wait'" v-model="form" :disabled="loading">
       <v-text-field
         autofocus
         outlined
-        v-model="tc"
-        :rules="tcRules"
-        :counter="11"
-        :maxlength="11"
-        label="TC Kimlik Numaranız"
-        @keypress="onlyNumberInput($event)"
+        v-model="sms"
+        :rules="smsRules"
+        label="SMS Kodunu Giriniz"
         required
       ></v-text-field>
-      <v-checkbox
-        v-model="confirmCheck"
-        color="success"
-        hide-details
+      <v-btn
+        :loading="loading"
+        block
+        color="primary"
+        class="pa-5"
+        :disabled="!form"
+        @click="confirm()"
       >
-        <span slot="label" :class="{'red--text': !confirmCheck, 'success--text': confirmCheck}">TC Kimlik numarası banka sahibine aittir</span>
-      </v-checkbox>
+        ONAYLA
+        <v-icon
+          right
+          dark
+        >
+          mdi-cellphone-check
+        </v-icon>
+      </v-btn>
     </v-form>
-    <v-btn
-      :loading="loading"
-      block
-      color="primary"
-      class="pa-5 mt-5"
-      :disabled="!tcFormValid || !confirmCheck || tc.length !== 11"
-      @click="checkTc()"
-    >
-      İleri
-      <v-icon
-        right
-        dark
-      >
-        mdi-arrow-right
-      </v-icon>
-    </v-btn>
+
   </v-container>
 </template>
 
 <script>
-import { mapActions } from 'vuex'
 export default {
-  name: "TcFormComponent",
+  name: "SmsFormComponent",
   data: () => {
     return {
       loading: false,
-      tc: '',
-      tcFormValid: false,
+      form: false,
+      smsStatus: 'wait',
+      sms: '',
       confirmCheck: false,
-      tcRules: [
-        v => !!v || 'Bu alan gereklidir',
-        v => v.length <= 11 || 'Name must be less than 10 characters',
+      smsRules: [
+        v => !!v || 'SMS Kodu alanı gereklidir'
       ],
     }
   },
   methods: {
-    ...mapActions(['updateTc']),
-    onlyNumberInput: function (evt) {
-      evt = (evt) ? evt : window.event;
-      let expect = evt.target.value.toString() + evt.key.toString();
-
-      if (!/^[0-9]+$/.test(expect)) {
-        evt.preventDefault();
-      } else {
-        return true;
-      }
-    },
-    checkTc() {
+    confirm() {
       this.loading = true;
       setTimeout(() => {
         this.loading = false;
-        this.updateTc(this.tc); // mutation
-        this.$emit('goStep', 2);
+        this.smsStatus = 'success';
       }, 2000);
     }
   }
